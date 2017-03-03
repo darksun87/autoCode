@@ -1,0 +1,28 @@
+package ${config.getProperty("basePackage")}.message;
+
+import java.math.BigDecimal;
+import java.io.Serializable;
+
+public class ${name.getMessageQueryClassName($table)} extends QueryInfo {
+	
+	/**   
+	 * @Fields serialVersionUID : 序列化版本号 
+	 */ 
+	private static final long serialVersionUID = 1L;
+
+	#foreach($column in $table.columns)
+
+	private $column.javaType $column.propertyName;
+	#end
+	
+    #foreach($column in $table.columns)
+
+	public $column.javaType ${column.getter}(){
+		return $column.propertyName;
+	}
+	
+	public void ${column.setter}($column.javaType $column.propertyName){
+		this.$column.propertyName = $column.propertyName;
+	}
+    #end
+}

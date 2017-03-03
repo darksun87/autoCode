@@ -1,0 +1,54 @@
+package ${config.getProperty("basePackage")}.service;
+
+#set($messageClass=$name.getMessageClassName($table))
+#set($modelClass=$name.getModelClassName($table))
+#set($messageVarName=$name.getMessageVarName($table))
+#set($bizClass=$name.getBizClassName($table))
+#set($primaryKeyVarName=$code.getVarName($table.primaryKey.memberColumns[0].propertyName))
+#set($primaryKeyParameter=$code.getParameters($table.primaryKey.memberColumns))
+#set($messageQueryClass=$name.getMessageQueryClassName($table))
+#set($messageQueryVar=$name.getMessageQueryVarName($table))
+#set($modelQueryClass=$name.getModelQueryClassName($table))
+#set($modelQueryVar=$name.getModelQueryVarName($table))
+
+import java.util.List;
+
+import ${config.getProperty("basePackage")}.message.MessageInfo;
+import ${config.getProperty("basePackage")}.message.QueryResultInfo;
+import ${name.getFullMessageClassName($table)};
+import ${name.getFullMessageQueryClassName($table)};
+
+public interface ${name.getServiceClassName($table)} {
+	#if($table.hasDeleteColumn())
+	
+	MessageInfo<Integer> delete$modelClass($primaryKeyParameter,String operatorId);
+	#else
+	MessageInfo<Integer> delete$modelClass($primaryKeyParameter);
+	#end
+	
+    MessageInfo<${table.primaryColumn.javaType}> create$modelClass($messageClass $messageVarName);
+		
+	MessageInfo<Integer> update$modelClass($messageClass $messageVarName);
+	#if($table.hasStatusColumn())
+		
+	MessageInfo<Integer> changeStatus($table.primaryColumn.javaType $table.primaryColumn.propertyName,$table.statusColumn.javaType $table.statusColumn.propertyName,String operatorId);
+	#end
+	
+	MessageInfo<$messageClass> get$modelClass( $primaryKeyParameter );
+		
+    MessageInfo<List<$messageClass>> getAll$modelClass();
+			
+    MessageInfo<QueryResultInfo<${messageClass}>> query${modelClass}($messageQueryClass $messageQueryVar);
+	
+	#foreach($index in $table.indexes)
+	#if($index.isUnique())
+	
+	MessageInfo<$messageClass> ${sql.getIndexBizName($index)}(${code.getParameters($index.memberColumns)});
+	#else
+
+	MessageInfo<List<$messageClass>> ${sql.getIndexBizName($index)}(${code.getParameters($index.memberColumns)});
+	#end
+	#end
+
+
+}

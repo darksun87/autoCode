@@ -1,0 +1,143 @@
+#set($messageClass=$name.getMessageClassName($table))
+#set($messageVar=$name.getMessageVarName($table))
+#set($modelClass=$name.getModelClassName($table))
+#set($modelVar=$name.getModelVarName($table))
+#set($bizClass=$name.getBizClassName($table))
+#set($bizVar=$name.getBizVarName($table))
+#set($convertor=$name.getConvertorClassName($table))
+#set($primaryKeyVarName=$code.getVarName($table.primaryKey.memberColumns[0].propertyName))
+#set($primaryKeyParameter=$code.getParameters($table.primaryKey.memberColumns))
+#set($messageQueryClass=$name.getMessageQueryClassName($table))
+#set($messageQueryVar=$name.getMessageQueryVarName($table))
+#set($modelQueryClass=$name.getModelQueryClassName($table))
+#set($modelQueryVar=$name.getModelQueryVarName($table))
+
+package ${config.getProperty("basePackage")}.service.impl;
+
+import java.util.List;
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+
+import ${name.getFullBizClassName($table)};
+
+import ${config.getProperty("basePackage")}.message.MessageInfo;
+import ${config.getProperty("basePackage")}.message.QueryResultInfo;
+import ${name.getFullMessageClassName($table)};
+import ${name.getFullMessageQueryClassName($table)};
+
+
+import ${config.getProperty("basePackage")}.model.Message;
+import ${config.getProperty("basePackage")}.model.QueryResult;
+import ${name.getFullModelClassName($table)};
+import ${name.getFullModelQueryClassName($table)};
+
+
+import ${name.getFullServiceClassName($table)};
+import ${name.getFullConvertorClassName($table)};
+import ${config.getProperty("basePackage")}.service.convertor.MessageConvertor;
+
+@Service("$name.getServiceVarName($table)")
+public class $name.getServiceImplClassName($table) implements $name.getServiceClassName($table) {
+
+	@Resource
+	private $bizClass $bizVar;
+	#if($table.hasDeleteColumn())
+		
+	public MessageInfo<Integer> delete$modelClass($primaryKeyParameter,String operatorId){
+		
+		Message<Integer> message  = ${bizVar}.delete$modelClass($primaryKeyVarName,operatorId);
+		MessageInfo<Integer> messageInfo = MessageConvertor.toMessageInfo(message);
+		messageInfo.setData(message.getData());
+		return messageInfo;		
+	}
+	#else
+			
+	public MessageInfo<Integer> delete$modelClass($primaryKeyParameter){
+		
+		Message<Integer> message  = ${bizVar}.delete$modelClass($primaryKeyVarName);
+		MessageInfo<Integer> messageInfo = MessageConvertor.toMessageInfo(message);
+		messageInfo.setData(message.getData());
+		return messageInfo;		
+	}
+	#end
+	
+    public MessageInfo<${table.primaryColumn.javaType}> create$modelClass($messageClass $messageVar){
+		
+		$modelClass $modelVar = ${convertor}.to${modelClass}($messageVar);
+		Message<${table.primaryColumn.javaType}> message  =  ${bizVar}.create$modelClass( $modelVar );
+		MessageInfo<${table.primaryColumn.javaType}> messageInfo  = MessageConvertor.toMessageInfo(message);
+		messageInfo.setData(message.getData());
+		return messageInfo;	
+	}
+	public MessageInfo<Integer> update$modelClass($messageClass $messageVar){
+		
+		$modelClass $modelVar = ${convertor}.to${modelClass}($messageVar);
+		Message<Integer> message  =  ${bizVar}.update$modelClass( $modelVar );
+		MessageInfo<Integer> messageInfo = MessageConvertor.toMessageInfo(message);
+		messageInfo.setData(message.getData());
+		return messageInfo;	
+	}
+	#if($table.hasStatusColumn())
+	public MessageInfo<Integer> changeStatus(
+			$table.primaryColumn.javaType $table.primaryColumn.propertyName,
+			$table.statusColumn.javaType $table.statusColumn.propertyName,
+			String operatorId){
+			
+		Message<Integer> message  = ${bizVar}.changeStatus($table.primaryColumn.propertyName,$table.statusColumn.propertyName,operatorId);
+		MessageInfo<Integer> messageInfo = MessageConvertor.toMessageInfo(message);
+		messageInfo.setData(message.getData());
+		return messageInfo;	
+	}
+	#end
+	public MessageInfo<$messageClass> get$modelClass( $primaryKeyParameter ){
+		
+		Message<$modelClass> message  = ${bizVar}.get$modelClass( $primaryKeyVarName );
+		MessageInfo<$messageClass> messageInfo = MessageConvertor.toMessageInfo(message);
+		$messageClass $messageVar = ${convertor}.to${messageClass}(message.getData());
+		messageInfo.setData($messageVar);
+		return messageInfo;
+	}
+
+    public MessageInfo<List<$messageClass>> getAll$modelClass(){
+	
+		Message<List<$modelClass>> message  = ${bizVar}.getAll$modelClass();
+		MessageInfo<List<$messageClass>> messageInfo = MessageConvertor.toMessageInfo(message);
+		List<$messageClass> ${messageVar}List = ${convertor}.to${messageClass}List(message.getData());
+		messageInfo.setData(${messageVar}List);
+		return messageInfo;	
+	}
+
+	public MessageInfo<QueryResultInfo<${messageClass}>> query${modelClass}($messageQueryClass $messageQueryVar) {
+		${modelQueryClass} ${modelQueryVar} = ${convertor}.to${modelQueryClass}($messageQueryVar);
+		Message<QueryResult<${modelClass}>> message = ${bizVar}.query${modelClass}(${modelQueryVar});
+		MessageInfo<QueryResultInfo<${messageClass}>> messageInfo = new MessageInfo<QueryResultInfo<${messageClass}>>();
+		QueryResultInfo<${messageClass}> queryResultInfo = ${convertor}.toQueryResultInfo(message.getData());
+		messageInfo.setData(queryResultInfo);
+		return messageInfo;
+	}
+   
+	#foreach($index in $table.indexes)
+	#if($index.isUnique())
+	
+	public MessageInfo<$messageClass> ${sql.getIndexBizName($index)}(${code.getParameters($index.memberColumns)}){
+		
+		Message<$modelClass> message  = ${bizVar}.${sql.getIndexBizName($index)}(${code.getParameterValues($index.memberColumns)});
+		MessageInfo<$messageClass> messageInfo = MessageConvertor.toMessageInfo(message);
+		$messageClass $messageVar = ${convertor}.to${messageClass}(message.getData());
+		messageInfo.setData( ${messageVar});
+		return messageInfo;	
+	}	
+	#else
+	
+	public MessageInfo<List<$messageClass>> ${sql.getIndexBizName($index)}(${code.getParameters($index.memberColumns)}){
+	
+		Message<List<$modelClass>> message  = ${bizVar}.${sql.getIndexBizName($index)}(${code.getParameterValues($index.memberColumns)});
+		MessageInfo<List<$messageClass>> messageInfo = MessageConvertor.toMessageInfo(message);
+		List<$messageClass> ${messageVar}List = ${convertor}.to${messageClass}List(message.getData());
+		messageInfo.setData(${messageVar}List);
+		return messageInfo;	
+	}
+	#end
+	#end
+
+}

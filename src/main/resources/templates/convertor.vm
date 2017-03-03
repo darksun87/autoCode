@@ -1,0 +1,88 @@
+#set($messageClass=$name.getMessageClassName($table))
+#set($messageVar=$name.getMessageVarName($table))
+#set($modelClass=$name.getModelClassName($table))
+#set($modelVar=$name.getModelVarName($table))
+#set($messageQueryClass=$name.getMessageQueryClassName($table))
+#set($messageQueryVar=$name.getMessageQueryVarName($table))
+#set($modelQueryClass=$name.getModelQueryClassName($table))
+#set($modelQueryVar=$name.getModelQueryVarName($table))
+package ${config.getProperty("basePackage")}.service.convertor;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.cglib.beans.BeanCopier;
+
+import $name.getFullMessageClassName($table);
+import $name.getFullMessageQueryClassName($table);
+import ${config.getProperty("basePackage")}.message.QueryResultInfo;
+import $name.getFullModelClassName($table);
+import $name.getFullModelQueryClassName($table);
+import ${config.getProperty("basePackage")}.model.QueryResult;
+
+public abstract class ${name.getConvertorClassName($table)} {
+
+	private static final BeanCopier beanCopierFor${messageClass} = BeanCopier.create(${modelClass}.class, ${messageClass}.class, false);
+	private static final BeanCopier beanCopierFor${modelClass} = BeanCopier.create(${messageClass}.class, ${modelClass}.class, false);
+	private static final BeanCopier beanCopierFor${modelQueryClass} = BeanCopier.create(${messageQueryClass}.class, ${modelQueryClass}.class, false);
+
+	public static ${messageClass} to${messageClass}(${modelClass} ${modelVar})
+	{
+		if (${modelVar} == null) {
+			return null;
+		}
+		${messageClass} ${messageVar} = new ${messageClass}();
+		beanCopierFor${messageClass}.copy(${modelVar}, ${messageVar}, null);
+		return ${messageVar};
+	}
+
+	public static ${modelClass} to${modelClass}(${messageClass} ${messageVar})
+	{
+		${modelClass} ${modelVar} = new ${modelClass}();
+		beanCopierFor${modelClass}.copy(${messageVar}, ${modelVar}, null);
+		return ${modelVar};
+	}
+
+	public static List<${messageClass}> to${messageClass}List(List<${modelClass}> ${modelVar}List)
+	{
+		if (${modelVar}List == null || ${modelVar}List.isEmpty()) {
+			return null;
+		}
+		List<${messageClass}> ${modelVar}InfoList = new ArrayList<${messageClass}>(${modelVar}List.size());
+		for (${modelClass} ${modelVar} : ${modelVar}List) {
+			${modelVar}InfoList.add(to${messageClass}(${modelVar}));
+		}
+		return ${modelVar}InfoList;
+	}
+
+	public static List<${modelClass}> to${modelClass}List(List<${messageClass}> ${modelVar}InfoList)
+	{
+		if (${modelVar}InfoList == null || ${modelVar}InfoList.isEmpty()) {
+			return null;
+		}
+		List<${modelClass}> ${modelVar}List = new ArrayList<${modelClass}>(${modelVar}InfoList.size());
+		for (${messageClass} ${messageVar} : ${modelVar}InfoList) {
+			${modelVar}List.add(to${modelClass}(${messageVar}));
+		}
+		return ${modelVar}List;
+	}
+	
+	public static ${modelClass}Query to${modelQueryClass}(${messageQueryClass} ${messageQueryVar})
+	{
+		if (${messageQueryVar}== null) {
+			return null;
+		}
+		${modelQueryClass} ${modelQueryVar} = new ${modelQueryClass}();
+		beanCopierFor${modelQueryClass}.copy(${messageQueryVar}, ${modelQueryVar}, null);
+		return ${modelQueryVar};
+	}
+
+	public static QueryResultInfo<${messageClass}> toQueryResultInfo(QueryResult<${modelClass}> queryResult)
+	{
+		QueryResultInfo<${messageClass}> queryResultInfo = new QueryResultInfo<${messageClass}>();
+		queryResultInfo.setPages(queryResult.getPages());
+		queryResult.setRecords(queryResult.getRecords());
+		queryResultInfo.setTotal(queryResult.getTotal());
+		queryResultInfo.setRecords(to${messageClass}List(queryResult.getRecords()));
+		return queryResultInfo;
+	}
+}

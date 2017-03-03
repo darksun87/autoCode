@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="$name.getFullMapperClassName($table)">
+	<resultMap id="BaseResultMap" type="$name.getFullModelClassName($table)">
+		#foreach($column in $table.columns)
+			#if($column.isPrimary())<id column="$column.columnName" property="$column.propertyName" jdbcType="$column.jdbcType" />
+			#else<result column="$column.columnName" property="$column.propertyName" jdbcType="$column.jdbcType" />
+			#end
+		#end
+	</resultMap>
+
+	<delete id="deleteByPrimaryKey" parameterType="$table.primaryColumn.fullJavaType">
+		DELETE FROM $table.tableName
+		$sql.getPrimaryWhere($table.columns)
+	</delete>
+	
+	<insert id="insert" parameterType="$name.getFullModelClassName($table)" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO $table.tableName (
+$sql.getInsertFileds($table)
+		)
+		VALUES
+		(
+$sql.getInsertValues($table)
+		)
+	</insert>
+
+	<update id="updateByPrimaryKey" parameterType="$name.getFullModelClassName($table)">
+		UPDATE $table.tableName
+		SET
+$sql.getUpdateFileds($table)
+	    $sql.getPrimaryWhere($table.columns)
+	</update>
+	
+	#if($table.hasStatusColumn())
+		
+	<update id="changeStatus">
+		UPDATE $table.tableName
+		SET
+    		update_time=#{updateTime,jdbcType=BIGINT},
+    		update_userid=#{updateUserid,jdbcType=VARCHAR},
+            status=#{status,jdbcType=INTEGER}
+	    $sql.getPrimaryWhere($table.columns)
+	</update>
+	#end
+	
+	#if($table.hasDeleteColumn())
+		
+	<update id="logicalDeleteByPrimaryKey">
+		UPDATE $table.tableName
+		SET
+    		update_time=#{updateTime,jdbcType=BIGINT},
+    		update_userid=#{updateUserid,jdbcType=VARCHAR},
+            is_deleted=1
+	    $sql.getPrimaryWhere($table.columns)
+	</update>
+	#end
+	
+	<sql id="selectFields">
+	$sql.getSelectedFileds($table.columns)
+	</sql>
+	
+	<select id="selectAll" resultMap="BaseResultMap">
+		SELECT
+		<include refid="selectFields" />
+		FROM $table.tableName
+	</select>
+	
+	<select id="query$table.modelName" resultMap="BaseResultMap" parameterType="$name.getFullModelQueryClassName($table)">
+		SELECT
+		<include refid="selectFields" />
+		FROM $table.tableName
+		<include refid="queryWhereAndOrder" />
+	</select>
+	
+	<sql id="queryWhereAndOrder">
+		<where>
+		#foreach($column in $table.columns)
+			#if($column.javaType=="String")<if test="${column.propertyName}!=null and ${column.propertyName}!=''">AND $column.columnName = #{${column.propertyName},jdbcType=${column.jdbcType}}</if>
+			#else<if test="${column.propertyName}!=null">AND $column.columnName = #{${column.propertyName},jdbcType=${column.jdbcType}}</if>
+			#end
+		#end
+		
+		</where>
+		<choose>
+			<when test="order!=null and orderBy!=null and order!='' and orderBy!=''">order by ${esc.d}{orderBy} ${esc.d}{order}</when>
+			<otherwise>order by id desc</otherwise>
+		</choose>
+	</sql>
+	
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="$table.primaryColumn.fullJavaType">
+		SELECT
+		<include refid="selectFields" />
+		FROM $table.tableName
+		$sql.getPrimaryWhere($table.columns)
+	</select>
+
+	<select id="selectByPrimaryKeyForUpdate" resultMap="BaseResultMap" parameterType="$table.primaryColumn.fullJavaType">
+		SELECT
+		<include refid="selectFields" />
+		FROM $table.tableName
+		$sql.getPrimaryWhere($table.columns)
+		FOR UPDATE
+	</select>
+	#foreach($index in $table.indexes)
+		
+	<select id="$sql.getIndexSelectName($index)" resultMap="BaseResultMap">
+		SELECT
+		<include refid="selectFields" />
+		FROM $table.tableName
+		$sql.getIndexWhere($index)
+	</select>
+	#end
+	
+</mapper>

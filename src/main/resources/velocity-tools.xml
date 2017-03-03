@@ -1,0 +1,17 @@
+<toolbox>
+	<tool>
+		<key>config</key>
+		<scope>application</scope>
+		<class>com.xf9.code.util.PropertyPlaceholder</class>
+	</tool>
+	<tool>
+		<key>StringUtil</key>
+		<scope>application</scope>
+		<class>com.xf9.code.util.StringUtil</class>
+	</tool>
+	<tool>
+		<key>sql</key>
+		<scope>application</scope>
+		<class>com.xf9.code.util.SqlUtil</class>
+	</tool>
+</toolbox>

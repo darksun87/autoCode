@@ -1,0 +1,154 @@
+#set($messageClass=$name.getMessageClassName($table))
+#set($messageVar=$name.getMessageVarName($table))
+#set($modelClass=$name.getModelClassName($table))
+#set($modelVar=$name.getModelVarName($table))
+#set($bizClass=$name.getBizClassName($table))
+#set($bizVar=$name.getBizVarName($table))
+#set($convertor=$name.getConvertorClassName($table))
+#set($primaryKeyVarName=$code.getVarName($table.primaryKey.memberColumns[0].propertyName))
+#set($primaryKeyParameter=$code.getParameters($table.primaryKey.memberColumns))
+#set($messageQueryClass=$name.getMessageQueryClassName($table))
+#set($messageQueryVar=$name.getMessageQueryVarName($table))
+#set($modelQueryClass=$name.getModelQueryClassName($table))
+#set($modelQueryVar=$name.getModelQueryVarName($table))
+#set($serviceVar=$name.getServiceVarName($table))
+#set($serviceClass=$name.getServiceClassName($table))
+package ${config.getProperty("basePackage")}.test;
+
+import static org.junit.Assert.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+import org.junit.Test;
+
+import ${config.getProperty("basePackage")}.message.MessageInfo;
+import ${config.getProperty("basePackage")}.message.QueryResultInfo;
+import ${name.getFullMessageClassName($table)};
+import ${name.getFullMessageQueryClassName($table)};
+
+import ${name.getFullServiceClassName($table)};
+
+public class ${name.getTestClassName($table)} extends TestBase {
+
+	
+	private $serviceClass ${serviceVar};
+
+	public $serviceClass get${serviceClass}() {
+		if (${serviceVar} == null) {
+			${serviceVar} = applicationContext.getBean(${serviceClass}.class);
+		}
+		return ${serviceVar};
+	}
+
+	#if($table.hasDeleteColumn())
+	
+	@Test
+	public void delete${modelClass}() {
+
+		${table.primaryColumn.javaType} ${table.primaryColumn.propertyName} = ${table.primaryColumn.getTestValue()};
+		String operatorId = "100";
+		MessageInfo<Integer> messageInfo = get${serviceClass}().delete${modelClass}(${table.primaryColumn.propertyName}, operatorId);
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+	#else
+		
+	@Test
+	public void delete${modelClass}() {
+		${table.primaryColumn.javaType} ${table.primaryColumn.propertyName} = ${table.primaryColumn.getTestValue()};
+		MessageInfo<Integer> messageInfo = get${serviceClass}().delete${modelClass}(${table.primaryColumn.propertyName});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+	#end
+	
+	@Test
+	public void create${modelClass}() {
+		${messageClass} ${messageVar} = new ${messageClass}();
+		#foreach($column in $table.columns)
+		${messageVar}.set${column.cPropertyName}(${column.getTestValue()});	
+		#end
+		MessageInfo<${table.primaryColumn.javaType}> messageInfo = get${serviceClass}().create${modelClass}(${messageVar});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+
+	@Test
+	public void update${modelClass}() {
+
+		${messageClass} ${messageVar} = new ${messageClass}();
+		#foreach($column in $table.columns)
+		${messageVar}.set${column.cPropertyName}(${column.getTestValue()});	
+		#end
+		MessageInfo<Integer> messageInfo = get${serviceClass}().update${modelClass}(${messageVar});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+
+	#if($table.hasStatusColumn())
+	@Test
+	public void changeStatus() {
+
+		$table.primaryColumn.javaType $table.primaryColumn.propertyName = $table.primaryColumn.getTestValue();
+		$table.statusColumn.javaType $table.statusColumn.propertyName =  $table.statusColumn.getTestValue();
+		String operatorId = "100";
+		MessageInfo<Integer> messageInfo = get${serviceClass}().changeStatus($table.primaryColumn.propertyName,$table.statusColumn.propertyName,operatorId);
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+	#end
+	
+	@Test
+	public void get${modelClass}() {
+		
+		$table.primaryColumn.javaType $table.primaryColumn.propertyName = $table.primaryColumn.getTestValue();
+		MessageInfo<${messageClass}> messageInfo = get${serviceClass}().get${modelClass}(${table.primaryColumn.propertyName});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+
+	@Test
+	public void getAll${modelClass}() {
+
+		MessageInfo<List<${messageClass}>> messageInfo = get${serviceClass}().getAll${modelClass}();
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+
+	@Test
+	public void query${modelClass}() {
+
+		${messageQueryClass} ${messageQueryVar} = new ${messageQueryClass}();
+		${messageQueryVar}.setPageIndex(1);
+		${messageQueryVar}.setPageSize(10);
+		${messageQueryVar}.setOrder("desc");
+		${messageQueryVar}.setOrderBy("${table.primaryColumn.propertyName}");
+		#foreach($column in $table.columns)
+		${messageQueryVar}.set${column.cPropertyName}(${column.getTestValue()});	
+		#end
+		MessageInfo<QueryResultInfo<${messageClass}>> messageInfo = get${serviceClass}().query${modelClass}(${messageQueryVar});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+   
+	
+	#foreach($index in $table.indexes)
+	#if($index.isUnique())
+		
+	@Test
+	public void ${sql.getIndexBizName($index)}(){
+		
+		#foreach($column in $index.memberColumns)
+		$column.javaType $column.propertyName = $column.getTestValue();
+		#end
+		MessageInfo<$messageClass> messageInfo = get${serviceClass}().${sql.getIndexBizName($index)}(${code.getParameterValues($index.memberColumns)});
+		assertEquals(messageInfo.getStatus(), 10000);
+	
+	}	
+	#else
+		
+	@Test
+	public void ${sql.getIndexBizName($index)}(){
+	
+		#foreach($column in $index.memberColumns)
+		$column.javaType $column.propertyName = $column.getTestValue();
+		#end
+		MessageInfo<List<$messageClass>> messageInfo = get${serviceClass}().${sql.getIndexBizName($index)}(${code.getParameterValues($index.memberColumns)});
+		assertEquals(messageInfo.getStatus(), 10000);
+	}
+	#end
+	#end
+
+}
